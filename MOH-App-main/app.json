@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "medic",
+    "slug": "medic",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "com.supabase",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": ["expo-router"],
+    "experiments": {
+      "typedRoutes": true
+    },
+  "extra": {
+    "supabaseUrl": "https://yckacfiiycnihlzmvjwz.supabase.co",
+    "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlja2FjZmlpeWNuaWhsem12and6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDg2ODgxMDAsImV4cCI6MjAyNDI2NDEwMH0.Vf-7_q5wtgijyta-_ATBLTrXUGcq_ZfllccoJNNfaJs"
+      }
+    }
+      
+  }
+  
+
+
