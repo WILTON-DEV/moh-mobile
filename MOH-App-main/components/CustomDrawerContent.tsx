@@ -3,18 +3,29 @@ import {
   DrawerItem,
   DrawerItemList,
 } from "@react-navigation/drawer";
-import { View, Text, Image } from "react-native";
+import { View, Text, Image, Alert } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { supabase } from "../lib/supabase";
 import { useEffect, useState } from "react";
 import React from "react";
+import axios from "axios";
 
 export default function CustomDrawerContent(props: any) {
   const { top, bottom } = useSafeAreaInsets();
 
   const doLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
+    try {
+      const response = await axios.post("http://localhost:3001/logout", {}, {
+        withCredentials: true, // Ensure cookies are sent with the request
+      });
+      if (response.status === 200) {
+        // Successfully logged out
+        props.navigation.navigate("Login"); // Navigate to the login screen or any other appropriate screen
+      } else {
+        throw new Error("Failed to log out");
+      }
+    } catch (error) {
+      Alert.alert("Logout Error", "Failed to log out. Please try again.");
+      console.error("Error logging out:", error);
     }
   };
 

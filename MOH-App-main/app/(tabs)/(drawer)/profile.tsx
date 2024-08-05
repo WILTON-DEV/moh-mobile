@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
-import { supabase } from "../../../lib/supabase";
+import axios from "axios";
 import { StyleSheet, View, Alert } from "react-native";
 import { Button, Input } from "react-native-elements";
-import { Session } from "@supabase/supabase-js";
 import React from "react";
 
-export default function AddPost({ session }: { session: Session }) {
+export default function AddPost({ session }: { session: any }) {
   const [loading, setLoading] = useState(true);
   const [username, setUsername] = useState("");
   const [imageUrl, setImageUrl] = useState("");
@@ -19,15 +18,8 @@ export default function AddPost({ session }: { session: Session }) {
       setLoading(true);
       if (!session?.user) throw new Error("No user on the session!");
 
-      const { data, error, status } = await supabase
-        .from("profiles")
-        .select(`username, website, avatar_url`)
-        .eq("id", session?.user.id)
-        .single();
-      if (error && status !== 406) {
-        throw error;
-      }
-
+      const response = await axios.get(`http://your-api-endpoint/profiles/${session.user.id}`);
+      const data = response.data;
       if (data) {
         setUsername(data.username);
         setImageUrl(data.avatar_url);
@@ -59,10 +51,10 @@ export default function AddPost({ session }: { session: Session }) {
         updated_at: new Date(),
       };
 
-      const { error } = await supabase.from("posts").upsert(updates);
+      const response = await axios.put(`http://your-api-endpoint/profiles/${session.user.id}`, updates);
 
-      if (error) {
-        throw error;
+      if (response.status !== 200) {
+        throw new Error("Error updating profile");
       }
     } catch (error) {
       if (error instanceof Error) {
@@ -95,7 +87,7 @@ export default function AddPost({ session }: { session: Session }) {
       </View>
 
       <View style={styles.verticallySpaced}>
-        <Button title="Sign Out" onPress={() => supabase.auth.signOut()} />
+        <Button title="Sign Out" onPress={() => axios.post("http://your-api-endpoint/auth/signout")} />
       </View>
     </View>
   );

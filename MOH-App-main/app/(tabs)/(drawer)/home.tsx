@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useRef } from "react";
-import { View, StyleSheet, FlatList, ActivityIndicator, Image } from "react-native";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { View, StyleSheet, FlatList, ActivityIndicator, Image, Text } from "react-native";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
-import { supabase } from "../../../lib/supabase"; 
-import FeedCard from "../../../components/FeedCard"; 
-import TagsScreen from "../../../components/TagsScreen"; 
-import HashTagScreen from "../../../components/HashTagScreen"; 
+import axios, { AxiosError } from "axios"; // Import AxiosError from axios
+import FeedCard from "../../../components/FeedCard";
+import TagsScreen from "../../../components/TagsScreen";
+import HashTagScreen from "../../../components/HashTagScreen";
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -16,44 +16,32 @@ const HomeScreen = () => {
   const [isFetching, setIsFetching] = useState(false);
   const [hasMorePosts, setHasMorePosts] = useState(true);
 
-  const flatListRef = useRef<FlatList | null>(null);
+  const flatListRef = useRef<FlatList<any> | null>(null);
 
   useEffect(() => {
     fetchPosts();
   }, []);
 
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     if (!hasMorePosts || isFetching) return;
     setIsFetching(true);
     setError(null);
     try {
-      const { data, error }: { data: any[] | null; error: any } = await supabase
-        .from("posts")
-        .select("*")
-        .range(page * 3 - 2, page * 3);
-      if (error) {
-        throw new Error(error.message);
-      }
-      const postsWithLocalPaths =
-        data?.map((post) => ({
-          ...post,
-          imageLocalPath: post.image_url, // Assuming the image URL is stored in 'image_url' field
-          profilePictureUrl: post.profile_picture_url, // Assuming the profile picture URL is stored in 'profile_picture_url' field
-        })) || [];
-      if (postsWithLocalPaths.length < 3) {
+      const response = await axios.get(`http://localhost:3001/posts`);
+      const data = response.data;
+      if (data.length < 3) {
         setHasMorePosts(false);
       }
-      // Append new posts to the existing list
-      setPosts((prevPosts) => [...prevPosts, ...postsWithLocalPaths]);
+      setPosts((prevPosts) => [...prevPosts, ...data]);
       setPage((prevPage) => prevPage + 1);
-    } catch (error: any) {
-      setError(error.message as string);
+    } catch (error: any) { // Handle error as any type
+      setError(error.message); // TypeScript infers 'error' as any type here
       console.error("Error fetching posts:", error);
     } finally {
       setIsLoading(false);
       setIsFetching(false);
     }
-  };
+  }, [page, hasMorePosts, isFetching]);
 
   const handleLoadMore = () => {
     fetchPosts();
@@ -71,7 +59,7 @@ const HomeScreen = () => {
     }
   };
 
-  const renderItem = ({ item, index }: { item: any; index: number }) => {
+  const renderItem = ({ item }: { item: any }) => {
     return (
       <View>
         <FeedCard items={item} />
@@ -81,15 +69,21 @@ const HomeScreen = () => {
 
   return (
     <View style={styles.container}>
-      <FlatList
-        ref={flatListRef}
-        data={posts}
-        keyExtractor={(item: any) => item.id.toString()}
-        renderItem={renderItem}
-        ListFooterComponent={renderFooter()}
-        onEndReachedThreshold={0.1}
-        onEndReached={handleLoadMore}
-      />
+      {isLoading ? (
+        <ActivityIndicator size="large" color="blue" />
+      ) : error ? (
+        <Text style={styles.errorText}>Error: {error}</Text>
+      ) : (
+        <FlatList
+          ref={flatListRef}
+          data={posts}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderItem}
+          ListFooterComponent={renderFooter}
+          onEndReachedThreshold={0.1}
+          onEndReached={handleLoadMore}
+        />
+      )}
     </View>
   );
 };
@@ -104,18 +98,13 @@ const ProfilePicture = () => (
 const App = () => {
   return (
     <Tab.Navigator
-      screenOptions={({ navigation }) => ({
+      screenOptions={{
         tabBarActiveTintColor: "blue",
         tabBarInactiveTintColor: "gray",
         tabBarLabelStyle: { fontSize: 16, fontWeight: "bold" },
         tabBarStyle: { paddingVertical: 10, backgroundColor: "white" },
         tabBarIndicatorStyle: { backgroundColor: "blue" },
-        headerLeft: () => (
-          <View style={styles.headerLeft}>
-            <ProfilePicture />
-          </View>
-        ),
-      })}
+      }}
       tabBarPosition="top"
     >
       <Tab.Screen
@@ -146,15 +135,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 20,
   },
+  errorText: {
+    textAlign: "center",
+    color: "red",
+    marginVertical: 20,
+  },
   profilePicture: {
     width: 40,
     height: 40,
     borderRadius: 20,
     marginLeft: 10,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
   },
 });
 

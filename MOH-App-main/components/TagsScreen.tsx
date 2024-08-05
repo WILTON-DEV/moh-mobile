@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
+import axios from "axios";
 
 interface HashTag {
   hashtag: string;
@@ -23,21 +24,33 @@ const TagsScreen = () => {
     { hashtag: "#MaternalChildHealthUG" },
     { hashtag: "#InfantAndHealthUg" },
     { hashtag: "#FightCancerUg" },
-    { hashtag: "#End HIV" },
+    { hashtag: "#EndHIV" },
     { hashtag: "#MalariaFreeFutureUG" },
     { hashtag: "#MOHatWork" },
     { hashtag: "#YellowFeverFreeUG" },
     { hashtag: "#WorldMalariaDayUG" },
-    { hashtag: "#End TB" },
+    { hashtag: "#EndTB" },
   ];
 
   const navigation = useNavigation();
-
   const [hashtags, setHashtags] = useState<HashTag[]>(initialHashtags);
   const [searchQuery, setSearchQuery] = useState("");
 
+  useEffect(() => {
+    fetchHashtags();
+  }, []);
+
+  const fetchHashtags = async () => {
+    try {
+      const response = await axios.get("http://localhost:3001/hashtags");
+      setHashtags(response.data);
+    } catch (error) {
+      console.error("Error fetching hashtags:", (error as Error).message);
+    }
+  };
+
   const filterHashtags = (query: string) => {
-    const filteredHashtags = initialHashtags.filter((tag) =>
+    const filteredHashtags = hashtags.filter((tag) =>
       tag.hashtag.toLowerCase().includes(query.toLowerCase())
     );
     setHashtags(filteredHashtags);
@@ -48,7 +61,7 @@ const TagsScreen = () => {
   };
 
   const handleTagPress = (tag: HashTag) => {
-    navigation.navigate("HashTagScreen", { hashtag: tag.hashtag });
+    // navigation.navigate("HashTagScreen", { hashtag: tag.hashtag });
   };
 
   return (
@@ -177,173 +190,3 @@ const styles = StyleSheet.create({
 });
 
 export default TagsScreen;
-
-
-
-
-// import React, { useState } from "react";
-// import {
-//   View,
-//   Text,
-//   FlatList,
-//   TextInput,
-//   TouchableOpacity,
-//   StyleSheet,
-// } from "react-native";
-// import { useNavigation } from "@react-navigation/native";
-// import { Ionicons } from "@expo/vector-icons";
-// import { Linking } from "react-native";
-
-// interface HashTag {
-//   hashtag: string;
-// }
-
-// const TagsScreen = () => {
-//   const unepiURL =
-//     "https://www.health.go.ug/ministry/uganda-national-expanded-program-on-immunisation-unepi";
-//   const UNEPI = unepiURL;
-//   const initialHashtags: HashTag[] = [
-//     {
-//       hashtag: "#Node",
-//     },
-//     { hashtag: "javascript" },
-//     { hashtag: "#reactnative" },
-//     { hashtag: "#webdevelopment" },
-//     { hashtag: "#coding" },
-//     { hashtag: "#100DaysOfCode" },
-//     { hashtag: "#programming" },
-//     { hashtag: "#frontend" },
-//     { hashtag: "#backend" },
-//     { hashtag: "#opensource" },
-//     { hashtag: "#devcommunity" },
-//   ];
-
-//   const navigation = useNavigation();
-
-//   const [hashtags, setHashtags] = useState<HashTag[]>(initialHashtags);
-//   const [searchQuery, setSearchQuery] = useState("");
-
-//   const filterHashtags = (query: string) => {
-//     const filteredHashtags = initialHashtags.filter((tag) =>
-//       tag.hashtag.toLowerCase().includes(query.toLowerCase())
-//     );
-//     setHashtags(filteredHashtags);
-//   };
-
-//   const handleSearch = () => {
-//     filterHashtags(searchQuery);
-//   };
-
-//   const handleTagPress = (tag: HashTag) => {
-//     // Navigate to the screen associated with the hashtag
-//     navigation.navigate("HashTagScreen", { hashtag: tag.hashtag });
-//   };
-
-//   return (
-//     <View style={styles.container}>
-//       <View style={styles.searchContainer}>
-//         <TextInput
-//           style={styles.searchInput}
-//           placeholder="Search to filter hashtags..."
-//           value={searchQuery}
-//           onChangeText={setSearchQuery}
-//         />
-//         <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
-//           <Ionicons name="search" size={24} color="white" />
-//         </TouchableOpacity>
-//       </View>
-//       <View style={styles.trendsContainer}>
-//         <FlatList
-//           data={hashtags}
-//           renderItem={({ item }) => (
-//             <TouchableOpacity onPress={() => handleTagPress(item)}>
-//               <View style={styles.trendItem}>
-//                 <Text style={styles.trendText}>{item.hashtag}</Text>
-//               </View>
-//             </TouchableOpacity>
-//           )}
-//           keyExtractor={(item) => item.hashtag}
-//         />
-//         <TouchableOpacity style={styles.showMore}>
-//           <Text style={styles.showMoreText}>Show more</Text>
-//         </TouchableOpacity>
-//       </View>
-//       <View style={styles.footer}>
-//         <Text style={styles.footerText}>© 2024 MINISTRY OF HEALTH</Text>
-//       </View>
-//     </View>
-//   );
-// };
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     backgroundColor: "#fff",
-//     paddingHorizontal: 20,
-//   },
-//   searchContainer: {
-//     flexDirection: "row",
-//     alignItems: "center",
-//     borderBottomWidth: 1,
-//     borderBottomColor: "#ccc",
-//     marginBottom: 20,
-//   },
-//   searchBox: {
-//     flexDirection: "row",
-//     alignItems: "center",
-//     flex: 1,
-//   },
-//   searchButton: {
-//     padding: 10,
-//     backgroundColor: "#007bff",
-//     borderRadius: 5,
-//     justifyContent: "center",
-//     alignItems: "center",
-//   },
-//   searchInput: {
-//     marginLeft: 10,
-//     flex: 1,
-//     fontSize: 16,
-//   },
-//   trendsContainer: {
-//     marginBottom: 20,
-//   },
-//   trendsHeader: {
-//     fontSize: 18,
-//     fontWeight: "bold",
-//     marginBottom: 10,
-//   },
-//   trendItem: {
-//     flexDirection: "row",
-//     alignItems: "center",
-//     marginBottom: 10,
-//   },
-//   trendText: {
-//     fontSize: 16,
-//     marginRight: 10,
-//     color: "#007bff",
-//   },
-//   showMore: {
-//     borderTopWidth: 1,
-//     borderTopColor: "#ccc",
-//     paddingTop: 10,
-//     alignItems: "center",
-//   },
-//   showMoreText: {
-//     color: "#007bff",
-//     fontWeight: "bold",
-//   },
-//   footer: {
-//     borderTopWidth: 1,
-//     borderTopColor: "#ccc",
-//     paddingVertical: 20,
-//     alignItems: "center",
-//   },
-//   footerText: {
-//     fontSize: 14,
-//     color: "#999",
-//     fontWeight: "bold",
-//   },
-// });
-
-// export default TagsScreen;

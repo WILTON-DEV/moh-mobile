@@ -3,6 +3,7 @@
   "compilerOptions": {
     "jsx": "react",
     "strict": true,
+    "esModuleInterop": true,
     // Add other compiler options as needed
     "types": ["@types/babel__core", "node", "react", "react-native"],
   },

@@ -1,9 +1,5 @@
 import React, { useState } from "react";
-import { Alert, StyleSheet, TextInput, View, Button, Text } from "react-native";
-
-import { TouchableOpacity } from "react-native-gesture-handler";
-import { Stack } from "expo-router";
-import { supabase } from "../../lib/supabase";
+import { Alert, StyleSheet, TextInput, View, TouchableOpacity, Text } from "react-native";
 
 export default function AuthPage() {
   const [email, setEmail] = useState("");
@@ -12,38 +8,65 @@ export default function AuthPage() {
 
   async function signInWithEmail() {
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email,
-      password: password,
-    });
+    try {
+      const response = await fetch('https://your-backend-url/signin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-    if (error) Alert.alert("Sign In Error", error.message);
-    setLoading(false);
+      if (!response.ok) {
+        throw new Error('Failed to sign in');
+      }
+
+      const data = await response.json();
+      // Handle successful sign-in response as needed
+      Alert.alert('Sign In Successful');
+    } catch (error: any) { // Explicitly typing error as any
+      console.error('Sign In Error:', error.message);
+      Alert.alert('Sign In Error', 'Failed to sign in');
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function signUpWithEmail() {
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email: email,
-      password: password,
-    });
+    try {
+      const response = await fetch('https://your-backend-url/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-    if (error) Alert.alert("Sign Up Error", error.message);
-    setLoading(false);
+      if (!response.ok) {
+        throw new Error('Failed to sign up');
+      }
+
+      const data = await response.json();
+      // Handle successful sign-up response as needed
+      Alert.alert('Sign Up Successful');
+    } catch (error: any) { // Explicitly typing error as any
+      console.error('Sign Up Error:', error.message);
+      Alert.alert('Sign Up Error', 'Failed to sign up');
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
     <View style={styles.container}>
-      <Stack.Screen
-        options={{ headerShown: true, title: "Supabase Expo Router App" }}
-      />
       <View style={[styles.verticallySpaced, styles.mt20]}>
         <TextInput
           style={styles.textInput}
           onChangeText={(text) => setEmail(text)}
           value={email}
           placeholder="email@address.com"
-          autoCapitalize={"none"}
+          autoCapitalize="none"
         />
       </View>
       <View style={styles.verticallySpaced}>
@@ -53,22 +76,24 @@ export default function AuthPage() {
           value={password}
           secureTextEntry={true}
           placeholder="Password"
-          autoCapitalize={"none"}
+          autoCapitalize="none"
         />
       </View>
       <View style={[styles.verticallySpaced, styles.mt20]}>
         <TouchableOpacity
           disabled={loading}
-          onPress={() => signInWithEmail()}
-          style={styles.buttonContainer}>
+          onPress={signInWithEmail}
+          style={styles.buttonContainer}
+        >
           <Text style={styles.buttonText}>SIGN IN</Text>
         </TouchableOpacity>
       </View>
       <View style={styles.verticallySpaced}>
         <TouchableOpacity
           disabled={loading}
-          onPress={() => signUpWithEmail()}
-          style={styles.buttonContainer}>
+          onPress={signUpWithEmail}
+          style={styles.buttonContainer}
+        >
           <Text style={styles.buttonText}>SIGN UP</Text>
         </TouchableOpacity>
       </View>

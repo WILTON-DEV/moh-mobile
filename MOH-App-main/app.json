@@ -30,11 +30,8 @@
     "plugins": ["expo-router"],
     "experiments": {
       "typedRoutes": true
-    },
-  "extra": {
-    "supabaseUrl": "https://yckacfiiycnihlzmvjwz.supabase.co",
-    "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlja2FjZmlpeWNuaWhsem12and6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDg2ODgxMDAsImV4cCI6MjAyNDI2NDEwMH0.Vf-7_q5wtgijyta-_ATBLTrXUGcq_ZfllccoJNNfaJs"
-      }
+    }
+  
     }
       
   }

@@ -29,3 +29,6 @@ const connectDB = async () => {
 
 // Replace `export` with `module.exports`
 module.exports = { connectDB, sequelize, Sequelize, DataTypes, QueryTypes };
+
+
+

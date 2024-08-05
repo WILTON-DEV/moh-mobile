@@ -8,9 +8,11 @@ import {
   TouchableOpacity,
   Share,
   Modal,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import ImageViewer from "react-native-image-zoom-viewer";
+import axios from "axios";
 
 interface Comment {
   id: number;
@@ -21,39 +23,58 @@ interface Comment {
 }
 
 interface FeedCardProps {
-  title: string;
-  username: string;
-  created_at: string;
-  content: string;
-  imageLocalPath?: string;
-  profilePictureUrl?: string;
-  hashtags?: string[];
-  onDeleteComment: (id: number) => void;
+  items: {
+    title: string;
+    username: string;
+    created_at: string;
+    content: string;
+    imageLocalPath?: string;
+    profilePictureUrl?: string;
+    hashtags?: string[];
+  };
 }
 
-const FeedCard = ({ items }: any) => {
+const FeedCard: React.FC<FeedCardProps> = ({ items }) => {
   const [comment, setComment] = useState<string>("");
   const [comments, setComments] = useState<Comment[]>([]);
   const [showZoomModal, setShowZoomModal] = useState(false);
 
   useEffect(() => {
-    setComments([]);
+    fetchComments();
   }, []);
+
+  const fetchComments = async () => {
+    try {
+      const response = await axios.get(`http://localhost:3001/comments/1`); // Adjust the post_id accordingly
+      setComments(response.data);
+    } catch (error) {
+      console.error("Error fetching comments:", (error as Error).message);
+    }
+  };
 
   const handleCommentSubmit = async () => {
     if (comment.trim() === "") return;
     try {
       const newComment = {
-        id: comments.length + 1,
         content: comment,
-        user_id: 1,
-        post_id: 1,
-        created_at: new Date().toISOString(),
+        user_id: 1, // Use actual user ID
+        post_id: 1, // Adjust the post_id accordingly
       };
-      setComments([...comments, newComment]);
+      const response = await axios.post("http://localhost:3001/comments", newComment);
+      setComments([...comments, response.data]);
       setComment("");
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error adding comment:", (error as Error).message);
+    }
+  };
+
+  const handleDeleteComment = async (id: number) => {
+    try {
+      await axios.delete(`http://localhost:3001/comments/${id}`);
+      setComments(comments.filter((comment) => comment.id !== id));
+    } catch (error) {
+      Alert.alert("Error", "Failed to delete comment. Please try again.");
+      console.error("Error deleting comment:", (error as Error).message);
     }
   };
 
@@ -66,10 +87,6 @@ const FeedCard = ({ items }: any) => {
       console.error("Error sharing:", (error as Error).message);
     }
   };
-
-  function onDeleteComment(id: number): void {
-    throw new Error("Function not implemented.");
-  }
 
   return (
     <View style={styles.card}>
@@ -92,7 +109,7 @@ const FeedCard = ({ items }: any) => {
           <Image
             source={{ uri: items.imageLocalPath }}
             style={styles.image}
-            resizeMode="contain" // Use contain to ensure the entire image is visible
+            resizeMode="contain"
           />
         </TouchableOpacity>
       )}
@@ -111,7 +128,7 @@ const FeedCard = ({ items }: any) => {
         {comments.map((commentData) => (
           <View key={commentData.id} style={styles.commentItem}>
             <Text>{commentData.content}</Text>
-            <TouchableOpacity onPress={() => onDeleteComment(commentData.id)}>
+            <TouchableOpacity onPress={() => handleDeleteComment(commentData.id)}>
               <Text style={styles.deleteButton}>Delete</Text>
             </TouchableOpacity>
           </View>
@@ -157,13 +174,7 @@ const styles = StyleSheet.create({
     padding: 10,
     margin: 5,
     borderRadius: 8,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    // boxShadow: "0px 2px 3.84px rgba(0, 0, 0, 0.25)",
     elevation: 5,
   },
   header: {
@@ -184,12 +195,12 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 1, // Adjust as needed
+    marginBottom: 1,
   },
   username: {
     fontWeight: "bold",
     fontSize: 16,
-    marginBottom: 3, // Adjust as needed
+    marginBottom: 3,
   },
   timeAgo: {
     color: "gray",
@@ -201,7 +212,7 @@ const styles = StyleSheet.create({
   title: {
     fontWeight: "bold",
     fontSize: 18,
-    marginBottom: 1, // Adjust as needed
+    marginBottom: 1,
     position: "absolute",
     top: 0,
   },

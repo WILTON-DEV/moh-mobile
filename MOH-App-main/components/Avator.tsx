@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { supabase } from "../lib/supabase";
-import { StyleSheet, View, Alert, Image, Button } from "react-native";
+import { StyleSheet, View, Alert, Image, Button, ActivityIndicator } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import React from "react";
+import axios from "axios";
 
 interface Props {
   size: number;
@@ -16,41 +16,20 @@ export default function Avatar({ url, size = 150, onUpload }: Props) {
   const avatarSize = { height: size, width: size };
 
   useEffect(() => {
-    if (url) downloadImage(url);
+    if (url) {
+      setAvatarUrl(url);
+    }
   }, [url]);
 
-  async function downloadImage(path: string) {
-    try {
-      const { data, error } = await supabase.storage
-        .from("pictures")
-        .download(path);
-
-      if (error) {
-        throw error;
-      }
-
-      const fr = new FileReader();
-      fr.readAsDataURL(data);
-      fr.onload = () => {
-        setAvatarUrl(fr.result as string);
-      };
-    } catch (error) {
-      if (error instanceof Error) {
-        console.log("Error downloading image: ", error.message);
-      }
-    }
-  }
-
-  async function uploadAvatar() {
+  const uploadAvatar = async () => {
     try {
       setUploading(true);
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images, 
-        allowsMultipleSelection: false, 
-        allowsEditing: true, 
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsMultipleSelection: false,
+        allowsEditing: true,
         quality: 1,
-        exif: false, 
       });
 
       if (result.canceled || !result.assets || result.assets.length === 0) {
@@ -59,57 +38,46 @@ export default function Avatar({ url, size = 150, onUpload }: Props) {
       }
 
       const image = result.assets[0];
-      console.log("Got image", image);
-
       if (!image.uri) {
-        throw new Error("No image uri!"); 
+        throw new Error("No image URI found!");
       }
 
-      const arraybuffer = await fetch(image.uri).then((res) =>
-        res.arrayBuffer()
-      );
+      const formData = new FormData();
+      formData.append("avatar", {
+        uri: image.uri,
+        name: "avatar.jpg",
+        type: "image/jpeg",
+      } as any);
+      formData.append("userId", "your-user-id"); // Replace with actual user ID
 
-      const fileExt = image.uri?.split(".").pop()?.toLowerCase() ?? "jpeg";
-      const path = `${Date.now()}.${fileExt}`;
-      const { data, error: uploadError } = await supabase.storage
-        .from("pictures")
-        .upload(path, arraybuffer, {
-          contentType: image.mimeType ?? "image/jpeg",
-        });
+      const response = await axios.post("http://localhost:3001/upload-avatar", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
-      if (uploadError) {
-        throw uploadError;
+      if (response.data && response.data.avatar_url) {
+        setAvatarUrl(response.data.avatar_url);
+        onUpload(response.data.avatar_url);
       }
-
-      onUpload(data.path);
     } catch (error) {
-      if (error instanceof Error) {
-        Alert.alert(error.message);
-      } else {
-        throw error;
-      }
+      console.error("Error uploading avatar:", error);
+      Alert.alert("Error", "Error uploading avatar. Please try again.");
     } finally {
       setUploading(false);
     }
-  }
+  };
 
   return (
     <View>
       {avatarUrl ? (
-        <Image
-          source={{ uri: avatarUrl }}
-          accessibilityLabel="Avatar"
-          style={[avatarSize, styles.avatar, styles.image]}
-        />
+        <Image source={{ uri: avatarUrl }} accessibilityLabel="Avatar" style={[avatarSize, styles.avatar, styles.image]} />
       ) : (
         <View style={[avatarSize, styles.avatar, styles.noImage]} />
       )}
-      <View>
-        <Button
-          title={uploading ? "Uploading ..." : "Upload"}
-          onPress={uploadAvatar}
-          disabled={uploading}
-        />
+      <View style={styles.buttonContainer}>
+        <Button title={uploading ? "Uploading ..." : "Upload"} onPress={uploadAvatar} disabled={uploading} />
+        {uploading && <ActivityIndicator style={styles.loadingIndicator} size="small" color="#0000ff" />}
       </View>
     </View>
   );
@@ -130,5 +98,12 @@ const styles = StyleSheet.create({
     borderStyle: "solid",
     borderColor: "rgb(200, 200, 200)",
     borderRadius: 5,
+  },
+  buttonContainer: {
+    marginTop: 10,
+    alignItems: "center",
+  },
+  loadingIndicator: {
+    marginTop: 10,
   },
 });

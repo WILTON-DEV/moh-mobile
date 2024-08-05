@@ -1,26 +1,46 @@
 const { sequelize, DataTypes } = require("../../config/database.js");
 
-const PostModel = sequelize.define(
-  "post",
+const Post = sequelize.define(
+  "Post",
   {
     id: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
-    name: {
+    title: {
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
         notNull: {
-          msg: "The post name field is required.",
+          msg: "The post title field is required.",
         },
       },
     },
+    content: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+      validate: {
+        notNull: {
+          msg: "The post content field is required.",
+        },
+      },
+    },
+    date: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
+    },
+    imageUrl: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
   },
-  { timestamps: true, schema: "moh" }
+  {
+    timestamps: true,
+    schema: "moh",
+    tableName: "posts", // Explicitly define the table name
+  }
 );
 
-PostModel.sync({ alter: true });
-
-module.exports = PostModel;
+module.exports = Post;

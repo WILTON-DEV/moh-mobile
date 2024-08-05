@@ -1,13 +1,20 @@
 import { useState, useEffect } from "react";
-import { supabase } from "../lib/supabase";
 import { StyleSheet, View, Alert } from "react-native";
 import { Button, Input } from "react-native-elements";
-import { Session } from "@supabase/supabase-js";
+import axios from "axios";
+import React from "react";
 
-export default function Account({ session }: { session: Session }) {
+interface Session {
+  user: {
+    id: string;
+    email: string;
+    // Add other properties if needed
+  };
+}
+
+export default function Account({ session }: { session: Session | null }) {
   const [loading, setLoading] = useState(true);
   const [username, setUsername] = useState("");
-  const [website, setWebsite] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
 
   useEffect(() => {
@@ -19,14 +26,8 @@ export default function Account({ session }: { session: Session }) {
       setLoading(true);
       if (!session?.user) throw new Error("No user on the session!");
 
-      const { data, error, status } = await supabase
-        .from("profiles")
-        .select(`username, avatar_url`)
-        .eq("id", session?.user.id)
-        .single();
-      if (error && status !== 406) {
-        throw error;
-      }
+      const response = await axios.get(`/api/profile/${session.user.id}`);
+      const data = response.data;
 
       if (data) {
         setUsername(data.username);
@@ -59,11 +60,7 @@ export default function Account({ session }: { session: Session }) {
         updated_at: new Date(),
       };
 
-      const { error } = await supabase.from("profiles").upsert(updates);
-
-      if (error) {
-        throw error;
-      }
+      await axios.put(`/api/profile/${session.user.id}`, updates);
     } catch (error) {
       if (error instanceof Error) {
         Alert.alert(error.message);
@@ -76,7 +73,7 @@ export default function Account({ session }: { session: Session }) {
   return (
     <View style={styles.container}>
       <View style={[styles.verticallySpaced, styles.mt20]}>
-        <Input label="Email" value={session?.user?.email} disabled />
+        <Input label="Email" value={session?.user.email} disabled />
       </View>
       <View style={styles.verticallySpaced}>
         <Input
@@ -95,7 +92,7 @@ export default function Account({ session }: { session: Session }) {
       </View>
 
       <View style={styles.verticallySpaced}>
-        <Button title="Sign Out" onPress={() => supabase.auth.signOut()} />
+        <Button title="Sign Out" onPress={() => {/* Handle sign out logic here */}} />
       </View>
     </View>
   );

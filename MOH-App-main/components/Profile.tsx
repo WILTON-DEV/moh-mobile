@@ -1,99 +1,89 @@
-import { useState, useEffect } from "react";
-import { supabase } from "../lib/supabase";
+import React, { useState, useEffect } from "react";
 import { StyleSheet, View, Alert } from "react-native";
 import { Button, Input } from "react-native-elements";
-import { Session } from "@supabase/supabase-js";
-import React from "react";
 
-export default function Account({ session }: { session: Session }) {
+interface Session {
+  user: {
+    id: string;
+    email: string;
+    // Add other properties as needed
+  };
+}
+
+export default function Account({ session }: { session: Session | null }) {
   const [loading, setLoading] = useState(true);
   const [username, setUsername] = useState("");
   const [website, setWebsite] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
 
   useEffect(() => {
-    if (session) getProfile();
+    if (session) {
+      fetchUserProfile();
+    }
   }, [session]);
 
-  async function getProfile() {
+  const fetchUserProfile = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      if (!session?.user) throw new Error("No user on the session!");
-
-      const { data, error, status } = await supabase
-        .from("profiles")
-        .select(`username, website, avatar_url`)
-        .eq("id", session?.user.id)
-        .single();
-      if (error && status !== 406) {
-        throw error;
+      const response = await fetch(
+        `https://your-backend-url/profile/${session?.user?.id}`
+      );
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
       }
-
-      if (data) {
-        setUsername(data.username);
-        setWebsite(data.website);
-        setAvatarUrl(data.avatar_url);
-      }
+      const data = await response.json();
+      setUsername(data.username);
+      setWebsite(data.website);
+      setAvatarUrl(data.avatar_url);
     } catch (error) {
-      if (error instanceof Error) {
-        Alert.alert(error.message);
-      }
+      console.error("Error fetching user profile:", error);
+      Alert.alert("Error fetching user profile");
     } finally {
       setLoading(false);
     }
-  }
+  };
 
-  async function updateProfile({
-    username,
-    website,
-    avatar_url,
-  }: {
-    username: string;
-    website: string;
-    avatar_url: string;
-  }) {
+  const updateProfile = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      if (!session?.user) throw new Error("No user on the session!");
-
-      const updates = {
-        id: session?.user.id,
-        username,
-        website,
-        avatar_url,
-        updated_at: new Date(),
-      };
-
-      const { error } = await supabase.from("profiles").upsert(updates);
-
-      if (error) {
-        throw error;
+      const response = await fetch(
+        `https://your-backend-url/profile/${session?.user?.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ username, website, avatar_url: avatarUrl }),
+        }
+      );
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
       }
+      Alert.alert("Profile updated successfully!");
     } catch (error) {
-      if (error instanceof Error) {
-        Alert.alert(error.message);
-      }
+      console.error("Error updating user profile:", error);
+      Alert.alert("Error updating user profile");
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   return (
     <View style={styles.container}>
       <View style={[styles.verticallySpaced, styles.mt20]}>
-        <Input label="Email" value={session?.user?.email} disabled />
+        <Input label="Email" value={session?.user?.email || ""} disabled />
       </View>
       <View style={styles.verticallySpaced}>
         <Input
           label="Username"
-          value={username || ""}
+          value={username}
           onChangeText={(text) => setUsername(text)}
         />
       </View>
       <View style={styles.verticallySpaced}>
         <Input
           label="Website"
-          value={website || ""}
+          value={website}
           onChangeText={(text) => setWebsite(text)}
         />
       </View>
@@ -101,15 +91,13 @@ export default function Account({ session }: { session: Session }) {
       <View style={[styles.verticallySpaced, styles.mt20]}>
         <Button
           title={loading ? "Loading ..." : "Update"}
-          onPress={() =>
-            updateProfile({ username, website, avatar_url: avatarUrl })
-          }
+          onPress={updateProfile}
           disabled={loading}
         />
       </View>
 
       <View style={styles.verticallySpaced}>
-        <Button title="Sign Out" onPress={() => supabase.auth.signOut()} />
+        <Button title="Sign Out" onPress={() => {}} />
       </View>
     </View>
   );
